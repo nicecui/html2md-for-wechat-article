@@ -50,7 +50,7 @@ def html_to_markdown(html_content):
                         if sub_child.name == 'br':
                             code_text += "\n"
                         else:
-                            code_text += f"`{sub_child.get_text()}`"
+                            code_text += f"{sub_child.get_text()}"
                 markdown.append(f"\n```\n{code_text}\n```\n")
     return '\n'.join(markdown)
 

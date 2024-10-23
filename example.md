@@ -22,8 +22,8 @@ OpenTelemetry 对 Python 服务进行监控，并连接 Tesla Owner API，每 5
 
 
 ```
-`git clone https://github.com/GreptimeTeam/demo-scene.git`
-`cd demo-scene/ev-open-telemetry`
+git clone https://github.com/GreptimeTeam/demo-scene.git
+cd demo-scene/ev-open-telemetry
 
 ```
 
@@ -33,8 +33,8 @@ OpenTelemetry 对 Python 服务进行监控，并连接 Tesla Owner API，每 5
 
 
 ```
-`docker -v`
-`=> Docker version ...`
+docker -v
+=> Docker version ...
 
 ```
 
@@ -108,25 +108,25 @@ Meter 的配置是在文件`ev-open-telemetry/ev_observer/ev_observer/init.py`[1
 
 
 ```
-`def cpu_time_callback(options: CallbackOptions) -> Iterable[Observation]:`
-`    observations = []`
-`    ``with`` open(``"/proc/stat"``) ``as`` procstat:`
-`        procstat.readline()  ``# skip the first line`
-`        ``for`` line ``in`` procstat:`
-`            ``if`` ``not`` line.startswith(``"cpu"``): ``break`
-`            cpu, *states = line.split()`
-`            observations.append(Observation(int(states[``0``]) // ``100``, {``"cpu"``: cpu, ``"state"``: ``"user"``}))`
-`            observations.append(Observation(int(states[``1``]) // ``100``, {``"cpu"``: cpu, ``"state"``: ``"nice"``}))`
-`            observations.append(Observation(int(states[``2``]) // ``100``, {``"cpu"``: cpu, ``"state"``: ``"system"``}))`
-`            ``# ... other states`
-`    ``return`` observations`
+def cpu_time_callback(options: CallbackOptions) -> Iterable[Observation]:
+    observations = []
+    with open("/proc/stat") as procstat:
+        procstat.readline()  # skip the first line
+        for line in procstat:
+            if not line.startswith("cpu"): break
+            cpu, *states = line.split()
+            observations.append(Observation(int(states[0]) // 100, {"cpu": cpu, "state": "user"}))
+            observations.append(Observation(int(states[1]) // 100, {"cpu": cpu, "state": "nice"}))
+            observations.append(Observation(int(states[2]) // 100, {"cpu": cpu, "state": "system"}))
+            # ... other states
+    return observations
 
-`meter.create_observable_counter(`
-`    ``"system.cpu.time"``,`
-`    callbacks=[cpu_time_callback],`
-`    unit=``"s"``,`
-`    description=``"CPU time"`
-`)`
+meter.create_observable_counter(
+    "system.cpu.time",
+    callbacks=[cpu_time_callback],
+    unit="s",
+    description="CPU time"
+)
 
 ```
 
@@ -144,13 +144,13 @@ Meter 的配置是在文件`ev-open-telemetry/ev_observer/ev_observer/init.py`[1
 
 
 ```
-`class ChargeState(MetricCollector):`
-`    battery_level: Optional[int] = Field(``None``, custom_tag=``"metric"``)`
-`    charge_energy_added: Optional[float] = Field(``None``, custom_tag=``"metric"``)`
-`    charge_miles_added_ideal: Optional[float] = Field(``None``, custom_tag=``"metric"``)`
-`    charge_miles_added_rated: Optional[float] = Field(``None``, custom_tag=``"metric"``)`
-`    ...`
-`    charging_state: Optional[str] = ``None`
+class ChargeState(MetricCollector):
+    battery_level: Optional[int] = Field(None, custom_tag="metric")
+    charge_energy_added: Optional[float] = Field(None, custom_tag="metric")
+    charge_miles_added_ideal: Optional[float] = Field(None, custom_tag="metric")
+    charge_miles_added_rated: Optional[float] = Field(None, custom_tag="metric")
+    ...
+    charging_state: Optional[str] = None
 
 ```
 
@@ -204,11 +204,11 @@ ev_observer/vehicle.py#L46-L58
 
 
 ```
-`TESLA_USER_EMAIL={Your_Tesla_Email} docker compose up -d && \`
-`while`` [ ``"$(docker inspect -f '{{.State.Running}}' ev-open-telemetry-ev_observer-1)"`` != ``"true"`` ]; do`
-`  echo ``"Waiting for container ev-open-telemetry-ev_observer-1 to be up..."`
-`  sleep ``1`
-`done && docker logs ev-open-telemetry-ev_observer``-1`` & docker attach ev-open-telemetry-ev_observer``-1`
+TESLA_USER_EMAIL={Your_Tesla_Email} docker compose up -d && \
+while [ "$(docker inspect -f '{{.State.Running}}' ev-open-telemetry-ev_observer-1)" != "true" ]; do
+  echo "Waiting for container ev-open-telemetry-ev_observer-1 to be up..."
+  sleep 1
+done && docker logs ev-open-telemetry-ev_observer-1 & docker attach ev-open-telemetry-ev_observer-1
 
 ```
 
@@ -218,8 +218,8 @@ ev_observer/vehicle.py#L46-L58
 
 
 ```
-`Open this URL to authenticate: `
-`https://auth.tesla.com/oauth2/v3/authorize?...`
+Open this URL to authenticate: 
+https://auth.tesla.com/oauth2/v3/authorize?...
 
 ```
 
@@ -239,7 +239,7 @@ GreptimeDB 支持 Postgres 的协议（以及其他多种协议），支持使�
 
 
 ```
-`psql -h ``0.0``.0``.0`` -p ``4003`` -d public`
+psql -h 0.0.0.0 -p 4003 -d public
 
 ```
 
@@ -249,45 +249,45 @@ GreptimeDB 支持 Postgres 的协议（以及其他多种协议），支持使�
 
 
 ```
-`SELECT table_schema, table_name`
-`public-> FROM information_schema.tables`
-`=>`
-` table_schema |               table_name`
-`--------------+----------------------------------------`
-` public       | chargestate_charge_rate`
-` public       | chargestate_battery_range`
-` public       | drivestate_power`
-` public       | chargestate_max_range_charge_counter`
-` public       | chargestate_charger_pilot_current`
-` public       | chargestate_minutes_to_full_charge`
-` public       | drivestate_native_location_supported`
-` public       | chargestate_charge_limit_soc_max`
-` public       | chargestate_charge_limit_soc_min`
-` public       | chargestate_timestamp`
-` public       | chargestate_charge_current_request`
-` public       | chargestate_charger_voltage`
-` public       | chargestate_ideal_battery_range`
-` public       | chargestate_usable_battery_level`
-` public       | drivestate_heading`
-` public       | chargestate_time_to_full_charge`
-` public       | drivestate_latitude`
-` public       | chargestate_charge_miles_added_ideal`
-` public       | drivestate_native_longitude`
-` public       | drivestate_gps_as_of`
-` public       | chargestate_est_battery_range`
-` public       | chargestate_charge_miles_added_rated`
-` public       | chargestate_charge_current_request_max`
-` public       | chargestate_charge_limit_soc`
-` public       | drivestate_timestamp`
-` public       | chargestate_charger_power`
-` public       | chargestate_battery_level`
-` public       | drivestate_native_latitude`
-` public       | chargestate_charge_limit_soc_std`
-` public       | chargestate_charge_energy_added`
-` public       | chargestate_charger_actual_current`
-` public       | drivestate_longitude`
-` public       | chargestate_charge_amps`
-`(``33`` rows)`
+SELECT table_schema, table_name
+public-> FROM information_schema.tables
+=>
+ table_schema |               table_name
+--------------+----------------------------------------
+ public       | chargestate_charge_rate
+ public       | chargestate_battery_range
+ public       | drivestate_power
+ public       | chargestate_max_range_charge_counter
+ public       | chargestate_charger_pilot_current
+ public       | chargestate_minutes_to_full_charge
+ public       | drivestate_native_location_supported
+ public       | chargestate_charge_limit_soc_max
+ public       | chargestate_charge_limit_soc_min
+ public       | chargestate_timestamp
+ public       | chargestate_charge_current_request
+ public       | chargestate_charger_voltage
+ public       | chargestate_ideal_battery_range
+ public       | chargestate_usable_battery_level
+ public       | drivestate_heading
+ public       | chargestate_time_to_full_charge
+ public       | drivestate_latitude
+ public       | chargestate_charge_miles_added_ideal
+ public       | drivestate_native_longitude
+ public       | drivestate_gps_as_of
+ public       | chargestate_est_battery_range
+ public       | chargestate_charge_miles_added_rated
+ public       | chargestate_charge_current_request_max
+ public       | chargestate_charge_limit_soc
+ public       | drivestate_timestamp
+ public       | chargestate_charger_power
+ public       | chargestate_battery_level
+ public       | drivestate_native_latitude
+ public       | chargestate_charge_limit_soc_std
+ public       | chargestate_charge_energy_added
+ public       | chargestate_charger_actual_current
+ public       | drivestate_longitude
+ public       | chargestate_charge_amps
+(33 rows)
 
 ```
 
@@ -295,23 +295,23 @@ GreptimeDB 支持 Postgres 的协议（以及其他多种协议），支持使�
 
 
 ```
-`SELECT vehicle_id, greptime_timestamp, greptime_value`
-`FROM chargestate_battery_range`
-`ORDER BY greptime_timestamp DESC`
-`LIMIT ``10``;`
-`=>`
-`vehicle_id |     greptime_timestamp     | greptime_value`
-`------------+----------------------------+----------------`
-` Ju         | ``2024``-10``-08`` ``00``:``13``:``49.145132`` |         ``117.02`
-` Ju         | ``2024``-10``-08`` ``00``:``12``:``49.136252`` |         ``117.02`
-` Ju         | ``2024``-10``-08`` ``00``:``11``:``49.127737`` |         ``117.02`
-` Ju         | ``2024``-10``-08`` ``00``:``10``:``49.115796`` |         ``117.02`
-` Ju         | ``2024``-10``-08`` ``00``:``09``:``49.098576`` |         ``117.02`
-` Ju         | ``2024``-10``-08`` ``00``:``08``:``49.085364`` |         ``117.02`
-` Ju         | ``2024``-10``-08`` ``00``:``07``:``49.072459`` |         ``117.02`
-` Ju         | ``2024``-10``-08`` ``00``:``06``:``49.055776`` |         ``117.02`
-` Ju         | ``2024``-10``-08`` ``00``:``05``:``49.042333`` |          ``117.6`
-` Ju         | ``2024``-10``-08`` ``00``:``04``:``49.022890`` |          ``117.6`
+SELECT vehicle_id, greptime_timestamp, greptime_value
+FROM chargestate_battery_range
+ORDER BY greptime_timestamp DESC
+LIMIT 10;
+=>
+vehicle_id |     greptime_timestamp     | greptime_value
+------------+----------------------------+----------------
+ Ju         | 2024-10-08 00:13:49.145132 |         117.02
+ Ju         | 2024-10-08 00:12:49.136252 |         117.02
+ Ju         | 2024-10-08 00:11:49.127737 |         117.02
+ Ju         | 2024-10-08 00:10:49.115796 |         117.02
+ Ju         | 2024-10-08 00:09:49.098576 |         117.02
+ Ju         | 2024-10-08 00:08:49.085364 |         117.02
+ Ju         | 2024-10-08 00:07:49.072459 |         117.02
+ Ju         | 2024-10-08 00:06:49.055776 |         117.02
+ Ju         | 2024-10-08 00:05:49.042333 |          117.6
+ Ju         | 2024-10-08 00:04:49.022890 |          117.6
 
 ```
 
