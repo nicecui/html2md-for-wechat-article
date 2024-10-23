@@ -1,4 +1,4 @@
-# html2md-for-wechat-article
+# html2md-for-wechat-articles
 
 This script converts a WeChat article into a markdown file.
 
